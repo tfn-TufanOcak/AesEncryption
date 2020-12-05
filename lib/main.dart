@@ -1,3 +1,4 @@
+import 'package:clipboard_manager/clipboard_manager.dart';
 import 'package:flutter/material.dart';
 import 'package:steel_crypt/steel_crypt.dart';
 
@@ -50,95 +51,127 @@ class MyHomePage extends StatefulWidget {
 class _MyHomePageState extends State<MyHomePage> {
   String textValue;
   String textPass;
-  String encrypted;
+  String result;
   var formKey = GlobalKey<FormState>();
-  var formKey2 = GlobalKey<FormState>();
-  decode(String password){
-    var aesEncrypter = AesCrypt(key: CryptKey().genFortuna(), padding: PaddingAES.pkcs7);
+  var _controller = TextEditingController();
+  FocusNode _focusNode;
+  @override
+  void initState() {
+    _focusNode = FocusNode();
+    _focusNode.addListener(() {
+      if (_focusNode.hasFocus) _controller.clear();
+    });
+    super.initState();
+  }
+
+  var aesEncrypter = AesCrypt(key: CryptKey().genFortuna(), padding: PaddingAES.pkcs7);
+  decode(String password, String encrypted){
+
     String decrypted = aesEncrypter.gcm.decrypt(enc: encrypted, iv: password);
     return decrypted;
   }
-  encode(String password){
-    var aesEncrypter = AesCrypt(key: CryptKey().genFortuna(), padding: PaddingAES.pkcs7);
-    encrypted = aesEncrypter.gcm.encrypt(inp: 'somedatahere', iv: password);
+  encode(String password, String text){
+     String encrypted = aesEncrypter.gcm.encrypt(inp: text, iv: password);
     return encrypted;
   }
   @override
   Widget build(BuildContext context) {
-    // This method is rerun every time setState is called, for instance as done
-    // by the _incrementCounter method above.
-    //
-    // The Flutter framework has been optimized to make rerunning build methods
-    // fast, so that you can just rebuild anything that needs updating rather
-    // than having to individually change instances of widgets.
+
     return Scaffold(
       resizeToAvoidBottomPadding: false,
       body: Center(
         // Center is a layout widget. It takes a single child and positions it
         // in the middle of the parent.
-        child: Column(
-          mainAxisAlignment: MainAxisAlignment.spaceEvenly,
-          children: [
-            Text(
-              "AES Encryption",
-              style: TextStyle(fontSize: 30),
-            ),
-            Form(
-              key: formKey,
-              child: TextFormField(
-                autofocus: true,
-                decoration: InputDecoration(
-                    border: OutlineInputBorder(),
-                    labelText: 'Enter the value'),
-                onSaved: (String value) {
-                  setState(() {
-                    textValue = value;
-                  });
-                },
-              ),
-            ),
-            Form(
-              key: formKey2,
-              child: TextFormField(
-                autofocus: false,
-                decoration: InputDecoration(
-                    border: OutlineInputBorder(),
-                    labelText: 'Enter the password'),
-                onSaved: (String value) {
-                  setState(() {
-                    textPass = value;
-                  });
-                },
-              ),
-            ),
-            Row(
-              mainAxisAlignment: MainAxisAlignment.spaceEvenly,
+        child: GestureDetector(
+          onTap: () {
+            FocusScope.of(context).requestFocus(FocusNode());
+
+          },
+          child: Form(
+            key: formKey,
+            child: ListView(
+
               children: [
-                FlatButton(
-                  onPressed: () {
-                    formKey.currentState.save();
-                    formKey2.currentState.save();
-                  },
-                  child: Text("Encode", style: TextStyle(fontSize: 20)),
+                Text(
+                  "AES Encryption",
+                  style: TextStyle(fontSize: 30),
                 ),
-                FlatButton(
-                  onPressed: () {
-                    formKey.currentState.save();
-                    formKey2.currentState.save();
+                TextFormField(
+                  focusNode: _focusNode,
+                  controller: _controller,
+                  autofocus: true,
+                  maxLines: 9,
+                  decoration: InputDecoration(
+                      border: OutlineInputBorder(),
+                      labelText: 'Enter the value'),
+                  onSaved: (String value) {
+                    setState(() {
+                      textValue = value;
+                    });
                   },
-                  child: Text("Decode", style: TextStyle(fontSize: 20)),
+                ),
+                TextFormField(
+                  autofocus: false,
+                  decoration: InputDecoration(
+                      border: OutlineInputBorder(),
+                      labelText: 'Enter the password'),
+                  onSaved: (String value) {
+                    setState(() {
+                      textPass = value;
+                    });
+                  },
+                ),
+
+                Row(
+                  mainAxisAlignment: MainAxisAlignment.spaceEvenly,
+                  children: [
+                    FlatButton(
+                      onPressed: () {
+                        formKey.currentState.save();
+                        setState(() {
+                          result = encode(textPass.trim(), textValue.trim());
+
+
+                        });
+                      },
+                      child: Text("Encode", style: TextStyle(fontSize: 20)),
+                    ),
+                    FlatButton(
+                      onPressed: () {
+                        formKey.currentState.save();
+                        setState(() {
+                          result = decode(textPass.trim(), textValue.trim());
+
+                        });
+                      },
+                      child: Text("Decode", style: TextStyle(fontSize: 20)),
+                    ),
+                  ],
+
+                ),
+                SelectableText(
+                  result ?? '',
+                  style: TextStyle(fontSize: 30),
+                ),
+                RaisedButton(
+                  child: Text('Copy'),
+                  onPressed: () {
+                    ClipboardManager.copyToClipBoard(result)
+                        .then((result) {
+                      final snackBar = SnackBar(
+                        content: Text('Copied to Clipboard'),
+                        action: SnackBarAction(
+                          label: 'Undo',
+                          onPressed: () {},
+                        ),
+                      );
+                      Scaffold.of(context).showSnackBar(snackBar);
+                    });
+                  },
                 ),
               ],
             ),
-            Text(textValue + textPass),
-            TextField(
-              enabled: false,
-              maxLines: 15,
-              decoration: InputDecoration(
-                border: OutlineInputBorder(),
-              ),
-            ),
-          ],
+          ),
         ),
       ),
     );
