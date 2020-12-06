@@ -64,7 +64,7 @@ class _MyHomePageState extends State<MyHomePage> {
     super.initState();
   }
 
-  var aesEncrypter = AesCrypt(key: CryptKey().genFortuna(), padding: PaddingAES.pkcs7);
+  var aesEncrypter = AesCrypt(key:"GpEVC0OOhm0/AI/erPiMl7gZU9r27XDcYuaZLdWREtw=", padding: PaddingAES.pkcs7);
   decode(String password, String encrypted){
 
     String decrypted = aesEncrypter.gcm.decrypt(enc: encrypted, iv: password);
