@@ -1,4 +1,4 @@
-import 'package:clipboard_manager/clipboard_manager.dart';
+import 'package:clipboard/clipboard.dart';
 import 'package:flutter/material.dart';
 import 'package:steel_crypt/steel_crypt.dart';
 
@@ -64,116 +64,113 @@ class _MyHomePageState extends State<MyHomePage> {
     super.initState();
   }
 
-  var aesEncrypter = AesCrypt(key:"GpEVC0OOhm0/AI/erPiMl7gZU9r27XDcYuaZLdWREtw=", padding: PaddingAES.pkcs7);
-  decode(String password, String encrypted){
-
+  var aesEncrypter = AesCrypt(
+      key: "GpEVC0OOhm0/AI/erPiMl7gZU9r27XDcYuaZLdWREtw=",
+      padding: PaddingAES.pkcs7);
+  decode(String password, String encrypted) {
     String decrypted = aesEncrypter.gcm.decrypt(enc: encrypted, iv: password);
     return decrypted;
   }
-  encode(String password, String text){
-     String encrypted = aesEncrypter.gcm.encrypt(inp: text, iv: password);
+
+  encode(String password, String text) {
+    String encrypted = aesEncrypter.gcm.encrypt(inp: text, iv: password);
     return encrypted;
   }
+
   @override
   Widget build(BuildContext context) {
-
     return Scaffold(
       resizeToAvoidBottomPadding: false,
-      body: Center(
-        // Center is a layout widget. It takes a single child and positions it
-        // in the middle of the parent.
-        child: GestureDetector(
-          onTap: () {
-            FocusScope.of(context).requestFocus(FocusNode());
-
-          },
-          child: Form(
-            key: formKey,
-            child: ListView(
-
-              children: [
-                Text(
-                  "AES Encryption",
-                  style: TextStyle(fontSize: 30),
-                ),
-                TextFormField(
-                  focusNode: _focusNode,
-                  controller: _controller,
-                  autofocus: true,
-                  maxLines: 9,
-                  decoration: InputDecoration(
-                      border: OutlineInputBorder(),
-                      labelText: 'Enter the value'),
-                  onSaved: (String value) {
-                    setState(() {
-                      textValue = value;
-                    });
-                  },
-                ),
-                TextFormField(
-                  autofocus: false,
-                  decoration: InputDecoration(
-                      border: OutlineInputBorder(),
-                      labelText: 'Enter the password'),
-                  onSaved: (String value) {
-                    setState(() {
-                      textPass = value;
-                    });
-                  },
-                ),
-
-                Row(
-                  mainAxisAlignment: MainAxisAlignment.spaceEvenly,
+      body: Builder(
+        builder: (context) {
+          return Center(
+            // Center is a layout widget. It takes a single child and positions it
+            // in the middle of the parent.
+            child: GestureDetector(
+              onTap: () {
+                FocusScope.of(context).requestFocus(FocusNode());
+              },
+              child: Form(
+                key: formKey,
+                child: ListView(
                   children: [
-                    FlatButton(
-                      onPressed: () {
-                        formKey.currentState.save();
+                    Text(
+                      "AES Encryption",
+                      style: TextStyle(fontSize: 30),
+                    ),
+                    TextFormField(
+                      focusNode: _focusNode,
+                      controller: _controller,
+                      autofocus: true,
+                      maxLines: 9,
+                      decoration: InputDecoration(
+                          border: OutlineInputBorder(),
+                          labelText: 'Enter the value'),
+                      onSaved: (String value) {
                         setState(() {
-                          result = encode(textPass.trim(), textValue.trim());
-
-
+                          textValue = value;
                         });
                       },
-                      child: Text("Encode", style: TextStyle(fontSize: 20)),
                     ),
-                    FlatButton(
-                      onPressed: () {
-                        formKey.currentState.save();
+                    TextFormField(
+                      autofocus: false,
+                      decoration: InputDecoration(
+                          border: OutlineInputBorder(),
+                          labelText: 'Enter the password'),
+                      onSaved: (String value) {
                         setState(() {
-                          result = decode(textPass.trim(), textValue.trim());
-
+                          textPass = value;
                         });
                       },
-                      child: Text("Decode", style: TextStyle(fontSize: 20)),
                     ),
-                  ],
-
-                ),
-                SelectableText(
-                  result ?? '',
-                  style: TextStyle(fontSize: 30),
-                ),
-                RaisedButton(
-                  child: Text('Copy'),
-                  onPressed: () {
-                    ClipboardManager.copyToClipBoard(result)
-                        .then((result) {
-                      final snackBar = SnackBar(
-                        content: Text('Copied to Clipboard'),
-                        action: SnackBarAction(
-                          label: 'Undo',
-                          onPressed: () {},
+                    Row(
+                      mainAxisAlignment: MainAxisAlignment.spaceEvenly,
+                      children: [
+                        FlatButton(
+                          onPressed: () {
+                            formKey.currentState.save();
+                            setState(() {
+                              result = encode(textPass.trim(), textValue.trim());
+                              copyToClipboard(context, result);
+                            });
+                          },
+                          child: Text("Encode", style: TextStyle(fontSize: 20)),
                         ),
-                      );
-                      Scaffold.of(context).showSnackBar(snackBar);
-                    });
-                  },
+                        FlatButton(
+                          onPressed: () {
+                            formKey.currentState.save();
+                            setState(() {
+                              result = decode(textPass.trim(), textValue.trim());
+                            });
+                          },
+                          child: Text("Decode", style: TextStyle(fontSize: 20)),
+                        ),
+                      ],
+                    ),
+                    SelectableText(
+                      result ?? '',
+                      style: TextStyle(fontSize: 30),
+                    )
+
+                  ],
                 ),
-              ],
+              ),
             ),
-          ),
-        ),
+          );
+        }
       ),
     );
+  }
+  copyToClipboard(context, result){
+    FlutterClipboard.copy(result).then((result) {
+      final snackBar = SnackBar(
+        content: Text('Copied to Clipboard'),
+        action: SnackBarAction(
+          label: 'Undo',
+          onPressed: () {},
+        ),
+      );
+      Scaffold.of(context).showSnackBar(snackBar);
+    });
   }
 }
